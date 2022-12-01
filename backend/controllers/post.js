@@ -6,7 +6,7 @@ exports.createPost = async (req, res) => {
       caption: req.body.caption,
       image: {
         public_id: "req.body.Public_id",
-        url: "req.body.url",
+        url: "https://dummyimage.com/600x400/000/fff",
       },
       owner: req.user._id,
     };
@@ -89,7 +89,7 @@ exports.getPostsofFollowing = async (req, res) => {
 
     const posts = await Post.find({
       owner: { $in: loggednUSer.following },
-    });
+    }).populate("owner likes comments.user");
 
     res.status(200).json({
       success: true,
@@ -161,7 +161,6 @@ exports.deleteComment = async (req, res) => {
         .json({ success: false, message: "Post not found" });
 
     const commentId = req.body.commentId;
-
     if (!commentId)
       return res
         .status(404)
@@ -174,7 +173,7 @@ exports.deleteComment = async (req, res) => {
         .json({ success: false, message: "comment dont exists, not found" });
 
     if (req.user.id.toString() !== post.comments[index].user.toString())
-      return res.status(404).json({ success: false, message: "Usnauthorised" });
+      return res.status(404).json({ success: false, message: "Unauthorised" });
 
     post.comments.splice(index, 1);
     await post.save();

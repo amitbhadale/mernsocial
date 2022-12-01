@@ -71,6 +71,22 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.getLoginUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate("posts");
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (e) {
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+
 exports.logOut = async (req, res) => {
   try {
     res
@@ -176,6 +192,21 @@ exports.updateProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "User updated",
+    });
+  } catch (e) {
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find();
+    res.status(200).json({
+      success: true,
+      users,
     });
   } catch (e) {
     res.status(500).json({
