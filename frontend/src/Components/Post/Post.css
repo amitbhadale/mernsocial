@@ -14,10 +14,11 @@
     padding: 1vmax;
   }
   .postHeader > button {
-    border-radius: 100%;
     color: rgba(0, 0, 0, 0.582);
   }
-  
+  .postHeader > button:hover{
+    background: #fff;
+  }
   .post > img {
     width: 100%;
   }
@@ -25,6 +26,7 @@
   .postDetails {
     display: flex;
     padding: 1vmax;
+    align-items: center;
   }
   
   .postDetails > a {
@@ -35,13 +37,14 @@
   
   .postFooter > button {
     color: rgba(0, 0, 0, 0.767);
+    background: white;
     margin: 0 1vmax;
-    border-radius: 100%;
     transition: all 0.3s;
-  }
+    border: none;}
   
   .postFooter > button:hover {
     transform: translateY(-4px);
+    background: white;
   }
   
   .postFooter > button > svg {

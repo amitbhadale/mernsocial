@@ -51,3 +51,44 @@ export const commentDeleteReducer = createReducer(intialState, {
     state.error = null;
   },
 });
+
+export const newPostReducer = createReducer(intialState, {
+  newPostRequest: (state) => {
+    state.loading = true;
+  },
+  newPostSuccess: (state, action) => {
+    state.loading = false;
+    state.message = action.payload;
+  },
+  newPostFailure: (state, action) => {
+    state.loading = false;
+    state.error = action.payload;
+  },
+  clearError: (state) => {
+    state.error = null;
+  },
+
+  updateCaptionRequest: (state) => {
+    state.loading = true;
+  },
+  updateCaptionSuccess: (state, action) => {
+    state.loading = false;
+    state.message = action.payload;
+  },
+  updateCaptionFailure: (state, action) => {
+    state.loading = false;
+    state.error = action.payload;
+  },
+
+  deletePostRequest: (state) => {
+    state.loading = true;
+  },
+  deletePostSuccess: (state, action) => {
+    state.loading = false;
+    state.message = action.payload;
+  },
+  deletePostFailure: (state, action) => {
+    state.loading = false;
+    state.error = action.payload;
+  },
+});

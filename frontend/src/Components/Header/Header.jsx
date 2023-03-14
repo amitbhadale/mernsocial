@@ -20,8 +20,8 @@ const Header = () => {
         {path === "/" ? <Home style={{ color: "black" }} /> : <HomeOutlined />}
       </Link>
 
-      <Link to="/newppost" onClick={() => setPath("/newppost")}>
-        {path === "/newppost" ? (
+      <Link to="/newpost" onClick={() => setPath("/newpost")}>
+        {path === "/newpost" ? (
           <Add style={{ color: "black" }} />
         ) : (
           <AddOutlined />

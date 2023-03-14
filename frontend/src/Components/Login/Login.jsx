@@ -9,9 +9,9 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
 
-  const loginHandler = (e) => {
+  const loginHandler = async (e) => {
     e.preventDefault();
-    dispatch(loginUser(email, password));
+    await dispatch(loginUser(email, password));
   };
   return (
     <div className="login">
@@ -20,7 +20,7 @@ const Login = () => {
         <input
           type="email"
           name=""
-          id=""
+          id="email"
           placeholder="Email"
           required
           value={email}
@@ -29,18 +29,21 @@ const Login = () => {
         <input
           type="password"
           name=""
-          id=""
+          id="password"
           placeholder="Password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Link to="/forgot/password">
-          <Typography>Forgot Password</Typography>
-        </Link>
-        <Link to="/register">
-          <Typography>New User</Typography>
-        </Link>
+        <div style={{ display: "flex" }}>
+          <Link to="/forgot/password">
+            <Typography>Forgot Password</Typography>
+          </Link>
+          <Link to="/register">
+            <Typography>New User</Typography>
+          </Link>
+        </div>
+
         <Button type="submit">Login</Button>
       </form>
     </div>

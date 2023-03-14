@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import User from "../User/User";
+import { getMyPosts, getUserPosts, loadUser } from "../../Actions/User";
 import "./Post.css";
 import {
   MoreVert,
@@ -11,7 +12,13 @@ import {
   ChatBubbleOutline,
   DeleteOutline,
 } from "@mui/icons-material";
-import { commentAdd, commentDelete, likeDislike } from "../../Actions/Posts";
+import {
+  commentAdd,
+  commentDelete,
+  likeDislike,
+  updateCapt,
+  deletePost,
+} from "../../Actions/Posts";
 import { getFollowingPost } from "../../Actions/User";
 const Post = ({
   postImage = "https://dummyimage.com/600x400/000/fff",
@@ -24,41 +31,78 @@ const Post = ({
   id,
   likes,
   comments,
+  isProfile,
 }) => {
   const dispatch = useDispatch();
   const [liked, setLiked] = useState(false);
   const [likeBoxOpen, setLikeBoxOpen] = useState(false);
   const [commentBoxOpen, setCommentBoxOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const [captionToggle, setCaptionToggle] = useState(false);
+  const [newCaption, setNewCaption] = useState("");
   const { user } = useSelector((state) => state.user);
-  console.log("comments", comments, user);
   const handleLike = async (id) => {
     setLiked(!liked);
     await dispatch(likeDislike(id));
-    dispatch(getFollowingPost());
+
+    if (isAccount) {
+      dispatch(getMyPosts());
+    } else {
+      dispatch(getFollowingPost());
+    }
+
+    if (isProfile) {
+      dispatch(getUserPosts(isProfile));
+    }
   };
   useEffect(() => {
-    likes.forEach((item) => {
-      setLiked(item._id === user._id);
-    });
-  }, [likes, user._id]);
+    if (user) {
+      likes.forEach((item) => {
+        setLiked(item._id === user._id);
+      });
+    }
+  }, [likes, user]);
   const commentSubmit = async (e) => {
     e.preventDefault();
     await dispatch(commentAdd(id, commentText));
     setCommentText("");
-    dispatch(getFollowingPost());
+    if (isAccount) {
+      dispatch(getMyPosts());
+    } else {
+      dispatch(getFollowingPost());
+    }
   };
 
   const deleteComment = async (postId, commentId) => {
     await dispatch(commentDelete(postId, commentId));
-    dispatch(getFollowingPost());
+    if (isAccount) {
+      dispatch(getMyPosts());
+    } else {
+      dispatch(getFollowingPost());
+    }
+  };
+  const editCaptionHandler = () => {
+    setCaptionToggle(true);
+    setNewCaption(caption);
+  };
+  const updateCaption = async (e) => {
+    e.preventDefault();
+    await dispatch(updateCapt(id, newCaption));
+    setNewCaption("");
+    await dispatch(getMyPosts());
+    setCaptionToggle(false);
   };
 
+  const deletePostHandler = async () => {
+    await dispatch(deletePost(id));
+    await dispatch(getMyPosts());
+    await dispatch(loadUser());
+  };
   return (
     <div className="post">
       <div className="postHeader">
         {isAccount ? (
-          <Button>
+          <Button onClick={() => editCaptionHandler()}>
             <MoreVert />
           </Button>
         ) : null}
@@ -84,12 +128,13 @@ const Post = ({
           {caption}
         </Typography>
       </div>
-      <button>
-        <Typography fontWeight={100} onClick={() => setLikeBoxOpen(true)}>
-          {likes.length} Likes
-        </Typography>
-      </button>
+
       <div className="postFooter">
+        <Button>
+          <Typography fontWeight={100} onClick={() => setLikeBoxOpen(true)}>
+            {likes.length} Likes
+          </Typography>
+        </Button>
         <Button onClick={() => handleLike(id)}>
           {liked ? <Favorite /> : <FavoriteBorder />}
         </Button>
@@ -97,7 +142,7 @@ const Post = ({
           <ChatBubbleOutline />
         </Button>
         {isDelete ? (
-          <Button>
+          <Button onClick={() => deletePostHandler()}>
             <DeleteOutline />
           </Button>
         ) : null}
@@ -155,6 +200,21 @@ const Post = ({
           ) : (
             <Typography varient="h6">No comments yet</Typography>
           )}
+        </form>
+      </Dialog>
+
+      <Dialog open={captionToggle} onClose={() => setCaptionToggle(false)}>
+        <form onSubmit={(e) => updateCaption(e)}>
+          <TextField
+            id="outlined-basic"
+            label="Caption"
+            variant="outlined"
+            value={newCaption}
+            onChange={(e) => setNewCaption(e.target.value)}
+          />
+          <Button variant="text" type="submit">
+            Submit
+          </Button>
         </form>
       </Dialog>
     </div>

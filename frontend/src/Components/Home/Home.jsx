@@ -8,9 +8,9 @@ import Loader from "../Loader/Loader";
 import { Typography } from "@mui/material";
 const Home = () => {
   const dispatch = useDispatch();
-  useEffect(() => {
-    dispatch(getFollowingPost());
-    dispatch(getAllUsers());
+  useEffect(async () => {
+    await dispatch(getFollowingPost());
+    await dispatch(getAllUsers());
   }, []);
 
   const { loading, posts } = useSelector((state) => state.postOfFollowing);

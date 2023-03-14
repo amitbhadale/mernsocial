@@ -8,6 +8,10 @@ const {
   updateProfile,
   getLoginUser,
   getAllUsers,
+  getMyPosts,
+  deleteProfile,
+  getUserPosts,
+  getUserInfo,
 } = require("../controllers/user");
 
 const { isAuthenticated } = require("../middlewares/auth");
@@ -20,7 +24,11 @@ router.route("/logout").get(logOut);
 router.route("/follow/:id").get(isAuthenticated, followUnfollowUSer);
 router.route("/update/password").put(isAuthenticated, updatePassword);
 router.route("/update/profile").put(isAuthenticated, updateProfile);
+router.route("/delete/profile").delete(isAuthenticated, deleteProfile);
 router.route("/me").get(isAuthenticated, getLoginUser);
 router.route("/users").get(isAuthenticated, getAllUsers);
+router.route("/myposts").get(isAuthenticated, getMyPosts);
+router.route("/user/posts/:id").get(isAuthenticated, getUserPosts);
+router.route("/user/:id").get(isAuthenticated, getUserInfo);
 // router.route("").post(isAuthenticated)
 module.exports = router;

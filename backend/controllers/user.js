@@ -1,19 +1,25 @@
 const User = require("../models/User");
+const Post = require("../models/Post");
+const cloudinary = require("cloudinary");
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, avtr } = req.body;
     let user = await User.findOne({ email });
     if (user)
       return res
         .status(400)
         .json({ success: false, message: "User already exists" });
 
+    const myCloud = await cloudinary.uploader.upload(avtr, {
+      folder: "avatars",
+    });
+
     user = await User.create({
       name,
       email,
       password,
-      avatar: { public_id: "sample_id", url: "sample" },
+      avatar: { public_id: myCloud.public_id, url: myCloud.secure_url },
     });
 
     const token = await user.generateToken();
@@ -38,7 +44,9 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    let user = await User.findOne({ email }).select("+password");
+    let user = await User.findOne({ email })
+      .select("+password")
+      .populate("posts followers following");
 
     if (!user)
       return res
@@ -73,7 +81,9 @@ exports.login = async (req, res) => {
 
 exports.getLoginUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate("posts");
+    const user = await User.findById(req.user._id).populate(
+      "posts followers following"
+    );
 
     res.status(200).json({
       success: true,
@@ -109,7 +119,7 @@ exports.followUnfollowUSer = async (req, res) => {
     if (!userToFollow)
       return res
         .status(404)
-        .json({ success: false, message: "USer not found" });
+        .json({ success: false, message: "User not found" });
 
     if (userToFollow.followers.includes(loggedUser._id)) {
       const indexFollower = userToFollow.followers.indexOf(loggedUser._id);
@@ -123,7 +133,7 @@ exports.followUnfollowUSer = async (req, res) => {
 
       res.status(200).json({
         success: true,
-        message: "USer unfollowed",
+        message: "User unfollowed",
       });
     } else {
       loggedUser.following.push(userToFollow._id);
@@ -151,7 +161,7 @@ exports.updatePassword = async (req, res) => {
     if (!oldPassword || !newPassword)
       return res.status(400).json({
         success: false,
-        message: "Old pass word and new password not found",
+        message: "Old password and new password not found",
       });
 
     const isMatch = await user.matchPasssword(oldPassword);
@@ -179,13 +189,24 @@ exports.updatePassword = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    const { name, email } = req.body;
+    const { name, email, avtr } = req.body;
 
     if (name) {
       user.name = name;
     }
     if (email) {
       user.email = email;
+    }
+
+    if (avtr) {
+      await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+
+      const myCloud = await cloudinary.v2.uploader.upload(avtr, {
+        folder: "avatars",
+      });
+
+      user.avatar.public_id = myCloud.public_id;
+      user.avatar.url = myCloud.secure_url;
     }
 
     await user.save();
@@ -203,10 +224,114 @@ exports.updateProfile = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find();
+    const users = await User.find({
+      name: { $regex: req.query.name, $options: "i" },
+    });
     res.status(200).json({
       success: true,
       users,
+    });
+  } catch (e) {
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+
+exports.getMyPosts = async (req, res) => {
+  try {
+    const page = req.query.page;
+    const itemsToShow = 5;
+    const skip = itemsToShow * (page - 1);
+    console.log("page", page);
+    // const skip =
+    const myposs = await Post.find({
+      owner: req.user._id,
+    })
+      .sort({ _id: -1 })
+      .limit(itemsToShow)
+      .skip(skip)
+      .populate("owner likes comments.user");
+    res.status(200).json({
+      success: true,
+      posts: myposs,
+    });
+  } catch (e) {
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+
+exports.deleteProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    const posts = user.posts;
+    const followers = user.followers;
+    const following = user.following;
+    const id = user._id;
+
+    //removing avatar from cloudinary
+    await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+    //TODO
+    console.log("posts", posts);
+
+    for (let i = 0; i < posts.length; i++) {
+      const post = await Post.findById(posts[i]);
+      await cloudinary.v2.uploader.destroy(post.image.public_id);
+      await post.remove();
+    }
+
+    res.cookie("token", null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    });
+
+    await user.remove();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile Deleted",
+    });
+  } catch (e) {
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+
+exports.getUserPosts = async (req, res) => {
+  try {
+    const posts = await Post.find({
+      owner: req.params.id,
+    })
+      .sort({ _id: -1 })
+      .populate("owner likes comments.user");
+
+    res.status(200).json({
+      success: true,
+      posts,
+    });
+  } catch (e) {
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+
+exports.getUserInfo = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).populate(
+      "followers following"
+    );
+    res.status(200).json({
+      success: true,
+      user,
     });
   } catch (e) {
     res.status(500).json({
